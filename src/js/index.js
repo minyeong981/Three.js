@@ -16,35 +16,20 @@ if (!$result) {
   scene.background = new THREE.Color(0xffffff);
 
   const camera = new THREE.PerspectiveCamera(
-    50, // 시야각을 키우면 캐릭터가 작게 보이니 더 작은 값으로 설정 가능
+    60, // 시야각을 키우면 캐릭터가 작게 보이니 더 작은 값으로 설정 가능
     $result.clientWidth / $result.clientHeight,
-    0.1,
+    0.9,
     1000
   );
-  camera.position.set(10, 10, 10);  // 캐릭터에 더 가까이 위치하게 설정
-  camera.lookAt(0, 0, 0);
+  camera.position.set(0, 30, 70); // 캐릭터에 더 가까이 위치하게 설정
+  camera.lookAt(0, 0, 2);
 
-  const renderer = new THREE.WebGLRenderer({ canvas: $result, antialias: true });
+  const renderer = new THREE.WebGLRenderer({
+    canvas: $result,
+    antialias: true,
+  });
   renderer.setSize($result.clientWidth, $result.clientHeight);
   renderer.shadowMap.enabled = true;
-
-  // 지오메트리 및 재질 추가
-  const geometry = new THREE.SphereGeometry(1);
-  const material = new THREE.MeshStandardMaterial({
-    color: 0x2e6ff2,
-  });
-  const cube = new THREE.Mesh(geometry, material);
-  cube.castShadow = true;
-
-  const geometry2 = new THREE.PlaneGeometry(10, 10);
-  const material2 = new THREE.MeshStandardMaterial({
-    color: 0x81a8f7,
-    side: THREE.DoubleSide,
-  });
-  const plane = new THREE.Mesh(geometry2, material2);
-  plane.rotation.x = Math.PI / -2;
-  plane.position.y = -1;
-  plane.receiveShadow = true;
 
   // 조명 추가
   const dl = new THREE.DirectionalLight(0xffffff, 2);
@@ -55,7 +40,7 @@ if (!$result) {
   dl.shadow.radius = 5;
   scene.add(dl);
 
-  const ambientLight = new THREE.AmbientLight(0xffffff, 3);
+  const ambientLight = new THREE.AmbientLight(0xffffff, 7);
   scene.add(ambientLight);
 
   let loadedModel;
@@ -63,7 +48,7 @@ if (!$result) {
   // GLTF 모델 로드
   const loader = new GLTFLoader();
   loader.load(
-    "../src/models/test.glb",
+    "../src/models/wavingGirl1.glb",
     (gltf) => {
       const model = gltf.scene;
       model.traverse((node) => {
@@ -73,8 +58,8 @@ if (!$result) {
       });
 
       // 모델의 크기를 크게 설정하여 캐릭터가 더 크게 보이도록 설정
-      model.scale.set(1.5, 1.5, 1.5);  // 모델 크기를 1.5배로 확대
-
+      model.scale.set(30, 70, 30); // 모델 크기를 1.5배로 확대
+      model.position.set(0, -3, 0);
       scene.add(model);
       loadedModel = model;
 
@@ -108,8 +93,8 @@ if (!$result) {
   // OrbitControls 설정
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.minDistance = 2;
-  controls.maxDistance = 10;
-  controls.enableDamping = true;
+  controls.maxDistance = 5;
+  controls.enableDamping = false;
 
   // 애니메이션 및 렌더링 함수
   function animate() {
@@ -126,9 +111,9 @@ if (!$result) {
   animate();
 
   // 반응형 설정
-  window.addEventListener("resize", () => {
-    camera.aspect = $result.clientWidth / $result.clientHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize($result.clientWidth, $result.clientHeight);
-  });
+  // window.addEventListener("resize", () => {
+  //   camera.aspect = $result.clientWidth / $result.clientHeight;
+  //   camera.updateProjectionMatrix();
+  //   renderer.setSize($result.clientWidth, $result.clientHeight);
+  // });
 }
