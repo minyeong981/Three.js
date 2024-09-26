@@ -15,32 +15,35 @@ if (!$result) {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0xffffff);
 
+  // 카메라 설정 - 더 가까이 설정하여 확대 효과
   const camera = new THREE.PerspectiveCamera(
-    60, // 시야각을 키우면 캐릭터가 작게 보이니 더 작은 값으로 설정 가능
+    10, // 시야각을 약간 넓게 설정하여 모델이 더 가까워 보이도록
     $result.clientWidth / $result.clientHeight,
-    0.9,
+    0.1,
     1000
   );
-  camera.position.set(0, 30, 70); // 캐릭터에 더 가까이 위치하게 설정
-  camera.lookAt(0, 0, 2);
+  camera.position.set(0.4, 1, 30); // 더 가까이 설정하여 확대된 것처럼 보임
+  camera.lookAt(0, 0, 0); // 모델의 위치에 맞추어 카메라 시점을 설정
 
   const renderer = new THREE.WebGLRenderer({
     canvas: $result,
     antialias: true,
   });
+
+  // 해상도 개선을 위해 픽셀 비율 설정
+  renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize($result.clientWidth, $result.clientHeight);
   renderer.shadowMap.enabled = true;
 
   // 조명 추가
-  const dl = new THREE.DirectionalLight(0xffffff, 2);
-  dl.position.set(0, 2, 2);
+  const dl = new THREE.DirectionalLight(0xffffff, 1);
+  dl.position.set(5, 5, 5);
   dl.castShadow = true;
-  dl.shadow.mapSize.width = 1024;
-  dl.shadow.mapSize.height = 1024;
-  dl.shadow.radius = 5;
+  dl.shadow.mapSize.width = 2048;
+  dl.shadow.mapSize.height = 2048;
   scene.add(dl);
 
-  const ambientLight = new THREE.AmbientLight(0xffffff, 7);
+  const ambientLight = new THREE.AmbientLight(0xffffff, 4);
   scene.add(ambientLight);
 
   let loadedModel;
@@ -48,18 +51,19 @@ if (!$result) {
   // GLTF 모델 로드
   const loader = new GLTFLoader();
   loader.load(
-    "../src/models/wavingGirl1.glb",
+    "../src/models/BBwaving.glb",
     (gltf) => {
       const model = gltf.scene;
       model.traverse((node) => {
         if (node.isMesh) {
           node.castShadow = true;
+          node.receiveShadow = true; // 그림자 효과를 추가로 개선
         }
       });
 
-      // 모델의 크기를 크게 설정하여 캐릭터가 더 크게 보이도록 설정
-      model.scale.set(30, 70, 30); // 모델 크기를 1.5배로 확대
-      model.position.set(0, -3, 0);
+      // 모델의 크기를 크게 설정하여 더 확대된 것처럼 보이게 설정
+      model.scale.set(1, 1, 1); // 모델 크기를 5배로 확대
+      model.position.set(0, -10, 0); // 모델의 위치 설정
       scene.add(model);
       loadedModel = model;
 
@@ -67,16 +71,6 @@ if (!$result) {
         mixer = new AnimationMixer(model);
 
         gltf.animations.forEach((clip) => {
-          clip.tracks = clip.tracks.filter((track) => {
-            const nodeName = track.name.split(".")[0];
-            if (model.getObjectByName(nodeName)) {
-              return true;
-            } else {
-              console.warn(`No target node found for track: ${track.name}`);
-              return false;
-            }
-          });
-
           const action = mixer.clipAction(clip);
           action.play();
         });
@@ -90,11 +84,19 @@ if (!$result) {
     }
   );
 
-  // OrbitControls 설정
+  // OrbitControls 설정 - 최소 거리와 최대 거리를 모델 크기에 맞게 조정
   const controls = new OrbitControls(camera, renderer.domElement);
-  controls.minDistance = 2;
-  controls.maxDistance = 5;
-  controls.enableDamping = false;
+  // controls.minDistance = 6;
+  // controls.maxDistance = 6; // 더 가까운 거리에서 최대 거리 제한
+  // controls.enableDamping = true;
+
+  // 화면 위아래 움직임을 막기 위한 설정
+  controls.minPolarAngle = Math.PI / 2.5; // 위아래 움직임을 중간 위치에 고정 (90도)
+  controls.maxPolarAngle = Math.PI / 2.5; // 위아래 움직임을 중간 위치에 고정 (90도)
+
+  // 좌우로 살짝만 움직이게 설정
+  controls.minAzimuthAngle = -Math.PI / 6; // 좌측으로 30도까지만 회전
+  controls.maxAzimuthAngle = Math.PI / 6; // 우측으로 30도까지만 회전
 
   // 애니메이션 및 렌더링 함수
   function animate() {
@@ -111,9 +113,9 @@ if (!$result) {
   animate();
 
   // 반응형 설정
-  // window.addEventListener("resize", () => {
-  //   camera.aspect = $result.clientWidth / $result.clientHeight;
-  //   camera.updateProjectionMatrix();
-  //   renderer.setSize($result.clientWidth, $result.clientHeight);
-  // });
+  window.addEventListener("resize", () => {
+    camera.aspect = $result.clientWidth / $result.clientHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize($result.clientWidth, $result.clientHeight);
+  });
 }
